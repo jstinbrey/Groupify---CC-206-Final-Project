@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'sign_in.dart';
-// import 'create_account.dart';
+import 'create_account.dart';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
@@ -98,7 +98,14 @@ class OnboardingScreen extends StatelessWidget {
                     child: SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const CreateAccountScreen(),
+                            ),
+                          );
+                        },
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.blue,
                           side: const BorderSide(color: Colors.blue),

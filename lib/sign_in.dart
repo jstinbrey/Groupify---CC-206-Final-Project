@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'create_account.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -204,8 +205,8 @@ class _SignInScreenState extends State<SignInScreen> {
                       top: 422,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Text(
+                        children: [
+                          const Text(
                             "Don't have an account? ",
                             style: TextStyle(
                               color: Color(0xFF0F172A),
@@ -214,13 +215,23 @@ class _SignInScreenState extends State<SignInScreen> {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          Text(
-                            'Sign Up',
-                            style: TextStyle(
-                              color: Color(0xFF3B82F6),
-                              fontSize: 15,
-                              fontFamily: 'Outfit',
-                              fontWeight: FontWeight.w500,
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const CreateAccountScreen(),
+                                ),
+                              );
+                            },
+                            child: const Text(
+                              'Sign Up',
+                              style: TextStyle(
+                                color: Color(0xFF3B82F6),
+                                fontSize: 15,
+                                fontFamily: 'Outfit',
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         ],
