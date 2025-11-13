@@ -109,7 +109,7 @@ class _TeamScreenState extends State<TeamScreen> {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(50),
                             child: Image.asset(
-                              'assets/images/useravatar.png',
+                              'assets/images/profilepic.png',
                               fit: BoxFit.cover,
                             ),
                           ),
@@ -136,6 +136,7 @@ class _TeamScreenState extends State<TeamScreen> {
                     padding: const EdgeInsets.all(21),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text(
                           'Team Overview',
@@ -148,7 +149,7 @@ class _TeamScreenState extends State<TeamScreen> {
                         ),
                         const SizedBox(height: 11),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             _buildOverviewStat(
                               value: _teamOverview['members'].toString(),
