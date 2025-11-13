@@ -44,4 +44,10 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 .vscode/mcp.json
+<<<<<<< HEAD
 lib/firebase_options.dart
+=======
+
+#API
+lib/firebase_options.dart
+>>>>>>> 7c37faa (feat(auth): implement Firebase custom token signup and verification flow)
