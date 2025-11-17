@@ -25,7 +25,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   List<Map<String, dynamic>> _userGroupings = [
     {
       'id': '1',
-      'name': 'BSCS 3A',
+      'name': 'BSCS 3B',
       'members': '32',
       'color': Color(0xFF84CC16),
     },
