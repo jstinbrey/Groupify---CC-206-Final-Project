@@ -5,6 +5,7 @@ import 'onboarding.dart';
 import 'dashboard.dart';
 import 'task_screen.dart';
 import 'file_screen.dart';
+import 'sign_in.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,7 +31,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         fontFamily: 'Outfit',
       ),
-      home: const HomeScreen(), // your default screen
+       home: const SignInScreen(), // your default screen
     );
   }
 }

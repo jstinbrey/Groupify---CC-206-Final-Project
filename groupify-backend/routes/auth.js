@@ -4,9 +4,9 @@ const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
 
-
+// ============================================
 // SIGN UP - After Onboarding Screens
-
+// ============================================
 router.post('/signup', async (req, res) => {
   try {
     const { fullName, email, password, school, course, yearLevel, section } = req.body;

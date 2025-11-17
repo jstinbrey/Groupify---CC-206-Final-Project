@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:groupify/new_task_screen.dart';
 import 'task_screen.dart';
 import 'file_screen.dart';
-import 'profilescreen.dart';
+import 'team_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,10 +17,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<String> _dateFilters = [
     'All',
-    '26 November',
-    '27 November',
-    '28 November',
-    '29 November',
+    '12 September',
+    '13 September',
+    '14 September',
+    '15 September',
   ];
 
   final List<Map<String, String>> _recentActivities = [
@@ -111,30 +111,20 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                         const SizedBox(width: 10),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const ProfileScreen(),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: ShapeDecoration(
-                              color: const Color(0xFFe2E8F0),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(50),
-                              ),
-                            ),
-                            child: ClipRRect(
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: ShapeDecoration(
+                            color: const Color(0xFFe2E8F0),
+                            shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(50),
-                              child: Image.asset(
-                                'assets/images/profilepic.png',
-                                fit: BoxFit.cover,
-                              ),
+                            ),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(50),
+                            child: Image.asset(
+                              'assets/images/profilepic.png',
+                              fit: BoxFit.cover,
                             ),
                           ),
                         ),
@@ -512,7 +502,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Positioned(
             right: 0,
             bottom: 0,
-            child: Image.asset(
+            child: Image.network(
               imagePlaceholder,
               width: 76,
               height: 67,
@@ -640,7 +630,7 @@ class _HomeScreenState extends State<HomeScreen> {
           break;
 
         case 2:
-          //Navigate to FilesScreen
+          //Navigate to TeamsScreen
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => FilesScreen()),
@@ -648,10 +638,10 @@ class _HomeScreenState extends State<HomeScreen> {
           break;
 
         case 3:
-          // Navigate to ProfileScreen
+          // Navigate to TeamScreen
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => ProfileScreen()),
+            MaterialPageRoute(builder: (context) => TeamScreen()),
           );
           break;
       }

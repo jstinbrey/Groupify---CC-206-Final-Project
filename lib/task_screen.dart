@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dashboard.dart';
 import 'file_screen.dart';
+import 'team_screen.dart';
 import 'new_task_screen.dart';
-import 'profilescreen.dart';
 
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
@@ -101,38 +101,28 @@ class _TasksScreenState extends State<TasksScreen> {
                         ],
                       ),
                       const SizedBox(width: 10),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const ProfileScreen(),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: ShapeDecoration(
-                              color: const Color(0xFFe2E8F0),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(50),
-                              ),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(50),
-                              child: Image.asset(
-                                'assets/images/profilepic.png',
-                                fit: BoxFit.cover,
-                              ),
-                            ),
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: ShapeDecoration(
+                          color: const Color(0xFFE2E8F0),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50),
                           ),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(50),
+                          child: Image.asset(
+                            'assets/images/profilepic.png',
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
+            ),
 
             // All Tasks Header with Add Button
             Padding(
@@ -391,7 +381,7 @@ class _TasksScreenState extends State<TasksScreen> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(50),
                     child: Image.asset(
-                      'assets/images/useravatar.png',
+                      'assets/images/profile_placeholder.png',
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -482,7 +472,7 @@ class _TasksScreenState extends State<TasksScreen> {
             // Navigate to TeamScreen
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => ProfileScreen()),
+              MaterialPageRoute(builder: (context) => TeamScreen()),
             );
             break;
         }
