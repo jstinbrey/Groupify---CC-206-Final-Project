@@ -235,7 +235,7 @@ class _TasksScreenState extends State<TasksScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'No tasks in "${_selectedTaskFilter}"',
+                            'No tasks in "$_selectedTaskFilter"',
                             style: TextStyle(
                               color: Colors.grey[600],
                               fontSize: 16,

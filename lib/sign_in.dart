@@ -245,7 +245,7 @@ class _SignInScreenState extends State<SignInScreen> {
             Positioned(
               left: 39,
               top: 270,
-              child: Container(
+              child: SizedBox(
                 width: 80,
                 height: 80,
                 child: Stack(
