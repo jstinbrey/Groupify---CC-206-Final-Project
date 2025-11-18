@@ -3,6 +3,7 @@ import 'dashboard.dart';
 import 'file_screen.dart';
 import 'new_task_screen.dart';
 import 'profilescreen.dart';
+import 'services/tasks_service.dart';
 
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
@@ -12,48 +13,160 @@ class TasksScreen extends StatefulWidget {
 }
 
 class _TasksScreenState extends State<TasksScreen> {
-  int _selectedBottomNavIndex = 1; // Tasks tab is selected
+  int _selectedBottomNavIndex = 1;
   String _selectedTaskFilter = 'To Do';
+  final _tasksService = TasksService();
+
+  bool _isLoading = true;
+  List<dynamic> _allTasks = [];
+  List<dynamic> _filteredTasks = [];
 
   final List<String> _taskFilters = ['To Do', 'In Progress', 'Done'];
 
-  final List<Map<String, dynamic>> _tasks = [
-    {
-      'title': 'Database Design and Integration',
-      'description': 'Create the database schema for user accounts, courses, and grades.',
-      'assignedTo': 'Allyn Ledesma',
-      'dueDate': 'Tomorrow',
-      'status': 'To do',
-      'statusColor': Color(0xFFFEF3C7),
-      'statusTextColor': Color(0xFFD97706),
-    },
-    {
-      'title': 'Testing and Bug Reporting',
-      'description': 'Brief description of what needs to be done for this task.',
-      'assignedTo': 'Joeross Palabrica',
-      'dueDate': 'Tomorrow',
-      'status': 'In progress',
-      'statusColor': Color(0xFFDBEAFE),
-      'statusTextColor': Color(0xFF2563EB),
-    },
-    {
-      'title': 'App Logo and Branding Design',
-      'description': 'Design the app logo, color palette, and typography to match the school\'s theme.',
-      'assignedTo': 'Jethro Rendon',
-      'dueDate': 'Tomorrow',
-      'status': 'Done',
-      'statusColor': Color(0xFFE0FEDB),
-      'statusTextColor': Color(0xFF40C721),
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadTasks();
+  }
 
-  // Filter tasks based on selected status
-  List<Map<String, dynamic>> _getFilteredTasks() {
-    return _tasks.where((task) {
-      final taskStatus = task['status'].toString().toLowerCase();
-      final filterStatus = _selectedTaskFilter.toLowerCase();
-      return taskStatus == filterStatus;
-    }).toList();
+  Future<void> _loadTasks() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final tasks = await _tasksService.getMyTasks();
+      setState(() {
+        _allTasks = tasks;
+        _filterTasks();
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading tasks: $e');
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading tasks: $e')),
+      );
+    }
+  }
+
+  void _filterTasks() {
+    setState(() {
+      _filteredTasks = _allTasks.where((task) {
+        return task['status'].toString().toLowerCase() == _selectedTaskFilter.toLowerCase();
+      }).toList();
+    });
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'to do':
+        return const Color(0xFFFEF3C7);
+      case 'in progress':
+        return const Color(0xFFDBEAFE);
+      case 'done':
+        return const Color(0xFFE0FEDB);
+      default:
+        return const Color(0xFFF8FAFC);
+    }
+  }
+
+  Color _getStatusTextColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'to do':
+        return const Color(0xFFD97706);
+      case 'in progress':
+        return const Color(0xFF2563EB);
+      case 'done':
+        return const Color(0xFF40C721);
+      default:
+        return const Color(0xFF64748B);
+    }
+  }
+
+  String _formatDueDate(dynamic dueDate) {
+    if (dueDate == null) return 'No deadline';
+    try {
+      final date = DateTime.parse(dueDate.toString());
+      final now = DateTime.now();
+      final difference = date.difference(now).inDays;
+
+      if (difference == 0) return 'Today';
+      if (difference == 1) return 'Tomorrow';
+      if (difference < 0) return 'Overdue';
+      return '${difference} days left';
+    } catch (e) {
+      return 'No deadline';
+    }
+  }
+
+  Future<void> _deleteTask(String taskId) async {
+    try {
+      await _tasksService.deleteTask(taskId);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Task deleted successfully')),
+      );
+      _loadTasks();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error deleting task: $e')),
+      );
+    }
+  }
+
+  Future<void> _updateTaskStatus(String taskId, String newStatus) async {
+    try {
+      await _tasksService.updateTask(taskId, status: newStatus);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Task updated successfully')),
+      );
+      _loadTasks();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error updating task: $e')),
+      );
+    }
+  }
+
+  void _showTaskOptions(dynamic task) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.check_circle_outline),
+              title: const Text('Mark as Done'),
+              onTap: () {
+                Navigator.pop(context);
+                _updateTaskStatus(task['id'], 'Done');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.edit),
+              title: const Text('Edit Task'),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Edit feature coming soon!')),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete, color: Colors.red),
+              title: const Text('Delete Task', style: TextStyle(color: Colors.red)),
+              onTap: () {
+                Navigator.pop(context);
+                _deleteTask(task['id']);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -101,38 +214,34 @@ class _TasksScreenState extends State<TasksScreen> {
                         ],
                       ),
                       const SizedBox(width: 10),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const ProfileScreen(),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: ShapeDecoration(
-                              color: const Color(0xFFe2E8F0),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(50),
-                              ),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ProfileScreen(),
                             ),
-                            child: ClipRRect(
+                          );
+                        },
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: ShapeDecoration(
+                            color: const Color(0xFFe2E8F0),
+                            shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(50),
-                              child: Image.asset(
-                                'assets/images/profilepic.png',
-                                fit: BoxFit.cover,
-                              ),
                             ),
                           ),
+                          child: const Center(
+                            child: Icon(Icons.person, color: Color(0xFF64748B)),
+                          ),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
+            ),
 
             // All Tasks Header with Add Button
             Padding(
@@ -163,13 +272,14 @@ class _TasksScreenState extends State<TasksScreen> {
                         Icons.add,
                         color: Color(0xFF22C55E),
                       ),
-                      onPressed: () {
-                        Navigator.push(
+                      onPressed: () async {
+                        await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => const NewTaskScreen(),
                           ),
                         );
+                        _loadTasks();
                       },
                     ),
                   ),
@@ -197,12 +307,13 @@ class _TasksScreenState extends State<TasksScreen> {
                       onTap: () {
                         setState(() {
                           _selectedTaskFilter = filter;
+                          _filterTasks();
                         });
                       },
                       child: Container(
                         height: 37,
                         decoration: ShapeDecoration(
-                          color: Colors.white,
+                          color: isSelected ? Colors.white : Colors.transparent,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(5),
                           ),
@@ -211,7 +322,7 @@ class _TasksScreenState extends State<TasksScreen> {
                           child: Text(
                             filter,
                             style: TextStyle(
-                              color: isSelected ? Colors.black : const Color(0xFF64748B),
+                              color: isSelected ? Colors.black : Colors.white,
                               fontSize: 16,
                               fontFamily: 'Outfit',
                               fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
@@ -229,56 +340,45 @@ class _TasksScreenState extends State<TasksScreen> {
 
             // Tasks List
             Expanded(
-              child: Builder(
-                builder: (context) {
-                  final filteredTasks = _getFilteredTasks();
-                  
-                  if (filteredTasks.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.task_outlined,
-                            size: 64,
-                            color: Colors.grey[300],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No tasks in "${_selectedTaskFilter}"',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 16,
-                              fontFamily: 'Outfit',
-                              fontWeight: FontWeight.w400,
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : RefreshIndicator(
+                      onRefresh: _loadTasks,
+                      child: _filteredTasks.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.task_outlined,
+                                    size: 64,
+                                    color: Colors.grey[300],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'No tasks in "$_selectedTaskFilter"',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 16,
+                                      fontFamily: 'Outfit',
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              itemCount: _filteredTasks.length,
+                              itemBuilder: (context, index) {
+                                final task = _filteredTasks[index];
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _buildTaskCard(task),
+                                );
+                              },
                             ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                  
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    itemCount: filteredTasks.length,
-                    itemBuilder: (context, index) {
-                      final task = filteredTasks[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _buildTaskCard(
-                          title: task['title'],
-                          description: task['description'],
-                          assignedTo: task['assignedTo'],
-                          dueDate: task['dueDate'],
-                          status: task['status'],
-                          statusColor: task['statusColor'],
-                          statusTextColor: task['statusTextColor'],
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
+                    ),
             ),
           ],
         ),
@@ -307,17 +407,8 @@ class _TasksScreenState extends State<TasksScreen> {
     );
   }
 
-  Widget _buildTaskCard({
-    required String title,
-    required String description,
-    required String assignedTo,
-    required String dueDate,
-    required String status,
-    required Color statusColor,
-    required Color statusTextColor,
-  }) {
+  Widget _buildTaskCard(dynamic task) {
     return Container(
-      height: 177,
       decoration: ShapeDecoration(
         color: const Color(0xFFF8FAFC),
         shape: RoundedRectangleBorder(
@@ -334,7 +425,7 @@ class _TasksScreenState extends State<TasksScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    title,
+                    task['title'] ?? 'Untitled Task',
                     style: const TextStyle(
                       color: Color(0xFF0F172A),
                       fontSize: 16,
@@ -359,50 +450,32 @@ class _TasksScreenState extends State<TasksScreen> {
                       size: 20,
                       color: Color(0xFF64748B),
                     ),
-                    onPressed: () {
-                      // Show options menu
-                    },
+                    onPressed: () => _showTaskOptions(task),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
             Text(
-              description,
+              task['description'] ?? 'No description',
               style: const TextStyle(
                 color: Color(0xFF64748B),
-                fontSize: 16,
+                fontSize: 14,
                 fontFamily: 'Outfit',
                 fontWeight: FontWeight.w400,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-            const Spacer(),
+            const SizedBox(height: 12),
             Row(
               children: [
-                Container(
-                  width: 30,
-                  height: 30,
-                  decoration: ShapeDecoration(
-                    color: const Color(0xFFE2E8F0),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(50),
-                    ),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(50),
-                    child: Image.asset(
-                      'assets/images/useravatar.png',
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 9),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Assigned to $assignedTo',
+                        task['assignedTo'] != null ? 'Assigned to you' : 'Unassigned',
                         style: const TextStyle(
                           color: Color(0xFF0F172A),
                           fontSize: 14,
@@ -411,7 +484,7 @@ class _TasksScreenState extends State<TasksScreen> {
                         ),
                       ),
                       Text(
-                        'Due: $dueDate',
+                        'Due: ${_formatDueDate(task['dueDate'])}',
                         style: const TextStyle(
                           color: Color(0xFF64748B),
                           fontSize: 10,
@@ -425,15 +498,15 @@ class _TasksScreenState extends State<TasksScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: ShapeDecoration(
-                    color: statusColor,
+                    color: _getStatusColor(task['status']),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                   child: Text(
-                    status,
+                    task['status'],
                     style: TextStyle(
-                      color: statusTextColor,
+                      color: _getStatusTextColor(task['status']),
                       fontSize: 10,
                       fontFamily: 'Outfit',
                       fontWeight: FontWeight.w400,
@@ -452,37 +525,26 @@ class _TasksScreenState extends State<TasksScreen> {
     final isSelected = _selectedBottomNavIndex == index;
     return GestureDetector(
       onTap: () {
-        setState(() {
-          _selectedBottomNavIndex = index;
-        });
-
-        // Handle navigation based on index
+        setState(() => _selectedBottomNavIndex = index);
         switch (index) {
           case 0:
-            // Navigate to HomeScreen
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => HomeScreen()),
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
             );
             break;
-
           case 1:
-            // Already in task screen
-
             break;
-
           case 2:
-            // Already on FilesScreen — do nothing
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => FilesScreen()),
+              MaterialPageRoute(builder: (context) => const FilesScreen()),
             );
             break;
           case 3:
-            // Navigate to TeamScreen
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => ProfileScreen()),
+              MaterialPageRoute(builder: (context) => const ProfileScreen()),
             );
             break;
         }
@@ -490,12 +552,8 @@ class _TasksScreenState extends State<TasksScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            icon,
-            color: Colors.white,
-            size: 24,
-          ),
-          if(isSelected)
+          Icon(icon, color: Colors.white, size: 24),
+          if (isSelected)
             Container(
               margin: const EdgeInsets.only(top: 2),
               width: 3,

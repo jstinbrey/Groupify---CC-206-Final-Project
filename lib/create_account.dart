@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'services/auth_service.dart';
+import 'dashboard.dart';
 
 class CreateAccountScreen extends StatefulWidget {
   const CreateAccountScreen({super.key});
@@ -8,22 +10,76 @@ class CreateAccountScreen extends StatefulWidget {
 }
 
 class _CreateAccountScreenState extends State<CreateAccountScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _fullNameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _schoolController = TextEditingController();
+  final _courseController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  final _authService = AuthService();
+
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isLoading = false;
   String? _selectedYearLevel;
   String? _selectedSection;
 
-  final List<String> _yearLevels = [
-    '1st Year',
-    '2nd Year',
-    '3rd Year',
-    '4th Year',
-  ];
+  final List<String> _yearLevels = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
+  final List<String> _sections = ['A', 'B'];
 
-  final List<String> _sections = [
-    'A',
-    'B',
-  ];
+  Future<void> _handleSignUp() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (_passwordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Passwords do not match'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await _authService.signUp(
+        fullName: _fullNameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        school: _schoolController.text.trim(),
+        course: _courseController.text.trim(),
+        yearLevel: _selectedYearLevel!,
+        section: _selectedSection!,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Account created successfully!'), backgroundColor: Colors.green),
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _fullNameController.dispose();
+    _emailController.dispose();
+    _schoolController.dispose();
+    _courseController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +87,6 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       body: Container(
         width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height,
-        clipBehavior: Clip.antiAlias,
         decoration: const BoxDecoration(color: Color(0xFF3B82F6)),
         child: Stack(
           children: [
@@ -50,456 +105,184 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                     ),
                   ),
                 ),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: MediaQuery.of(context).size.width * 0.077,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 34),
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.077),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 34),
+                        Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () => Navigator.pop(context),
+                              child: const Icon(Icons.arrow_back, size: 24),
+                            ),
+                            const SizedBox(width: 15),
+                            const Text('Create Account', style: TextStyle(fontSize: 20, fontFamily: 'Outfit', fontWeight: FontWeight.w500)),
+                          ],
+                        ),
+                        const SizedBox(height: 30),
 
-                      //Back Button and Title
-                      Row(
-                        children: [
-                          GestureDetector(
-                            onTap: () => Navigator.pop(context),
-                            child: const Icon(
-                              Icons.arrow_back,
-                              size: 24,
-                              color: Colors.black,
-                            ),
-                          ),
-                          const SizedBox(width: 15),
-                          const Text(
-                            'Create Account',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 20,
-                              fontFamily: 'Outfit',
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 30),
+                        // Full Name
+                        _buildLabel('Full Name'),
+                        _buildTextField(_fullNameController, 'Juan Dela Cruz', (v) => v!.isEmpty ? 'Required' : null),
+                        const SizedBox(height: 12),
 
-                      //Full Name
-                      const Text(
-                        'Full Name',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 12,
-                          fontFamily: 'Outfit',
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Container(
-                        height: 43,
-                        decoration: ShapeDecoration(
-                          shape: RoundedRectangleBorder(
-                            side: const BorderSide(
-                              width: 2,
-                              color: Color(0xFFECEDF1),
-                            ),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const TextField(
-                          decoration: InputDecoration(
-                            hintText: 'Juan Dela Cruz',
-                            hintStyle: TextStyle(
-                              color: Color(0xFFB3B0B0),
-                              fontSize: 12,
-                              fontFamily: 'Outfit',
-                              fontWeight: FontWeight.w500,
-                            ),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.only(left: 13, top: 5, bottom: 15),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
+                        // Email
+                        _buildLabel('Email'),
+                        _buildTextField(_emailController, 'student@school.edu.ph', (v) {
+                          if (v!.isEmpty) return 'Required';
+                          if (!v.contains('@')) return 'Invalid email';
+                          return null;
+                        }, keyboardType: TextInputType.emailAddress),
+                        const SizedBox(height: 12),
 
-                      //Email Address
-                      const Text(
-                        'Email',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 12,
-                          fontFamily: 'Outfit',
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Container(
-                        height: 43,
-                        decoration: ShapeDecoration(
-                          shape: RoundedRectangleBorder(
-                            side: const BorderSide(
-                              width: 2,
-                              color: Color(0xFFECEDF1),
-                            ),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const TextField(
-                          decoration: InputDecoration(
-                            hintText: 'studentemail.@school.edu.ph',
-                            hintStyle: TextStyle(
-                              color: Color(0xFFB3B0B0),
-                              fontSize: 12,
-                              fontFamily: 'Outfit',
-                              fontWeight: FontWeight.w500,
-                            ),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.only(left: 13, top: 5, bottom: 15),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
+                        // School
+                        _buildLabel('School'),
+                        _buildTextField(_schoolController, 'West Visayas State University', (v) => v!.isEmpty ? 'Required' : null),
+                        const SizedBox(height: 12),
 
-                      //School
-                      const Text(
-                        'School',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 12,
-                          fontFamily: 'Outfit',
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Container(
-                        height: 43,
-                        decoration: ShapeDecoration(
-                          shape: RoundedRectangleBorder(
-                            side: const BorderSide(
-                              width: 2,
-                              color: Color(0xFFECEDF1),
-                            ),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const TextField(
-                          decoration: InputDecoration(
-                            hintText: 'West Visayas State University',
-                            hintStyle: TextStyle(
-                              color: Color(0xFFB3B0B0),
-                              fontSize: 12,
-                              fontFamily: 'Outfit',
-                              fontWeight: FontWeight.w500,
-                            ),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.only(left: 13, top: 5, bottom: 15),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
+                        // Course
+                        _buildLabel('Course'),
+                        _buildTextField(_courseController, 'BS Computer Science', (v) => v!.isEmpty ? 'Required' : null),
+                        const SizedBox(height: 12),
 
-                      //Course
-                      const Text(
-                        'Course',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 12,
-                          fontFamily: 'Outfit',
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Container(
-                        height: 43,
-                        decoration: ShapeDecoration(
-                          shape: RoundedRectangleBorder(
-                            side: const BorderSide(
-                              width: 2,
-                              color: Color(0xFFECEDF1),
-                            ),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const TextField(
-                          decoration: InputDecoration(
-                            hintText: 'BS Computer Science',
-                            hintStyle: TextStyle(
-                              color: Color(0xFFB3B0B0),
-                              fontSize: 12,
-                              fontFamily: 'Outfit',
-                              fontWeight: FontWeight.w500,
-                            ),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.only(left: 13, top: 5, bottom: 15),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-
-                      //Year Level and Section Row
-                      Row(
-                        children: [
-                          //Year Level Dropdown
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Year Level',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 12,
-                                    fontFamily: 'Outfit',
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(height: 5),
-                                Container(
-                                  height: 43,
-                                  padding: const EdgeInsets.symmetric(horizontal: 13),
-                                  decoration: ShapeDecoration(
-                                    shape: RoundedRectangleBorder(
-                                      side: const BorderSide(
-                                        width: 2,
-                                        color: Color(0xFFECEDF1),
-                                      ),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                                  child: DropdownButtonHideUnderline(
-                                    child: DropdownButton<String>(
-                                      value: _selectedYearLevel,
-                                      hint: const Text(
-                                        'Select your year level',
-                                        style: TextStyle(
-                                          color: Color(0xFFB3B0B0),
-                                          fontSize: 12,
-                                          fontFamily: 'Outfit',
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      isExpanded: true,
-                                      icon: const Icon(
-                                        Icons.arrow_drop_down,
-                                        color: Color(0xFFB3B0B0),
-                                      ),
-                                      items: _yearLevels.map((String value) {
-                                        return DropdownMenuItem<String>(
-                                          value: value,
-                                          child: Text(
-                                            value,
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              fontFamily: 'Outfit',
-                                            ),
-                                          ),
-                                        );
-                                      }).toList(),
-                                      onChanged: (String? newValue) {
-                                        setState(() {
-                                          _selectedYearLevel = newValue;
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 24),
-
-                          // Section
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Section',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 12,
-                                    fontFamily: 'Outfit',
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(height: 5),
-                                Container(
-                                  height: 43,
-                                  padding: const EdgeInsets.symmetric(horizontal: 13),
-                                  decoration: ShapeDecoration(
-                                    shape: RoundedRectangleBorder(
-                                      side: const BorderSide(
-                                        width: 2,
-                                        color: Color(0xFFECEDF1),
-                                      ),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  ),
-                                  child: DropdownButtonHideUnderline(
-                                    child: DropdownButton<String>(
-                                      value: _selectedSection,
-                                      hint: const Text(
-                                        'Select your section',
-                                        style: TextStyle(
-                                          color: Color(0xFFB3B0B0),
-                                          fontSize: 12,
-                                          fontFamily: 'Outfit',
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      isExpanded: true,
-                                      icon: const Icon(
-                                        Icons.arrow_drop_down,
-                                        color: Color(0xFFB3B0B0),
-                                      ),
-                                      items: _sections.map((String value) {
-                                        return DropdownMenuItem<String>(
-                                          value: value,
-                                          child: Text(
-                                            value,
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              fontFamily: 'Outfit',
-                                            ),
-                                          ),
-                                        );
-                                      }).toList(),
-                                      onChanged: (String? newValue) {
-                                        setState(() {
-                                          _selectedSection = newValue;
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      //Password
-                      const Text(
-                        'Password',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 12,
-                          fontFamily: 'Outfit',
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Container(
-                        height: 43,
-                        decoration: ShapeDecoration(
-                          shape: RoundedRectangleBorder(
-                            side: const BorderSide(
-                              width: 2,
-                              color: Color(0xFFECEDF1),
-                            ),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: TextField(
-                          obscureText: _obscurePassword,
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.only(left: 13, top: 5, bottom: 15, right: 13),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                                color: const Color(0xFFB3B0B0),
-                                size: 20,
+                        // Year Level and Section
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildLabel('Year Level'),
+                                  _buildDropdown(_selectedYearLevel, _yearLevels, 'Select year', (v) => setState(() => _selectedYearLevel = v)),
+                                ],
                               ),
-                              onPressed: () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
                             ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-
-                      //Confirm Password
-                      const Text(
-                        'Confirm Password',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 12,
-                          fontFamily: 'Outfit',
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Container(
-                        height: 43,
-                        decoration: ShapeDecoration(
-                          shape: RoundedRectangleBorder(
-                            side: const BorderSide(
-                              width: 2,
-                              color: Color(0xFFECEDF1),
-                            ),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: TextField(
-                          obscureText: _obscureConfirmPassword,
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.only(left: 13, top: 5, bottom: 15, right: 13),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
-                                color: const Color(0xFFB3B0B0),
-                                size: 20,
+                            const SizedBox(width: 24),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildLabel('Section'),
+                                  _buildDropdown(_selectedSection, _sections, 'Select section', (v) => setState(() => _selectedSection = v)),
+                                ],
                               ),
-                              onPressed: () {
-                                setState(() {
-                                  _obscureConfirmPassword = !_obscureConfirmPassword;
-                                });
-                              },
                             ),
-                          ),
+                          ],
                         ),
-                      ),
-                      const Spacer(),
+                        const SizedBox(height: 12),
 
-                      //Create Account Button
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // Handle create account action
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF3B82F6),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.all(10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
+                        // Password
+                        _buildLabel('Password'),
+                        _buildPasswordField(_passwordController, _obscurePassword, () => setState(() => _obscurePassword = !_obscurePassword)),
+                        const SizedBox(height: 12),
+
+                        // Confirm Password
+                        _buildLabel('Confirm Password'),
+                        _buildPasswordField(_confirmPasswordController, _obscureConfirmPassword, () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword)),
+                        const SizedBox(height: 30),
+
+                        // Create Account Button
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _handleSignUp,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF3B82F6),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.all(10),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                             ),
-                          ),
-                          child: const Text(
-                            'Create Account',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontFamily: 'Outfit',
-                              fontWeight: FontWeight.w500,
-                            ),
+                            child: _isLoading
+                                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                : const Text('Create Account', style: TextStyle(fontSize: 20, fontFamily: 'Outfit', fontWeight: FontWeight.w500)),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 30),
-                    ],
+                        const SizedBox(height: 30),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Text(text, style: const TextStyle(fontSize: 12, fontFamily: 'Outfit', fontWeight: FontWeight.w500));
+  }
+
+  Widget _buildTextField(TextEditingController controller, String hint, String? Function(String?)? validator, {TextInputType? keyboardType}) {
+    return Container(
+      height: 43,
+      decoration: ShapeDecoration(
+        shape: RoundedRectangleBorder(
+          side: const BorderSide(width: 2, color: Color(0xFFECEDF1)),
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        validator: validator,
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(color: Color(0xFFB3B0B0), fontSize: 12, fontFamily: 'Outfit'),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.only(left: 13, top: 5, bottom: 15),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPasswordField(TextEditingController controller, bool obscure, VoidCallback toggle) {
+    return Container(
+      height: 43,
+      decoration: ShapeDecoration(
+        shape: RoundedRectangleBorder(
+          side: const BorderSide(width: 2, color: Color(0xFFECEDF1)),
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+      child: TextFormField(
+        controller: controller,
+        obscureText: obscure,
+        validator: (v) => v!.isEmpty ? 'Required' : (v.length < 8 ? 'Min 8 characters' : null),
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.only(left: 13, top: 5, bottom: 15, right: 13),
+          suffixIcon: IconButton(
+            icon: Icon(obscure ? Icons.visibility_off : Icons.visibility, color: const Color(0xFFB3B0B0), size: 20),
+            onPressed: toggle,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdown(String? value, List<String> items, String hint, void Function(String?) onChanged) {
+    return Container(
+      height: 43,
+      padding: const EdgeInsets.symmetric(horizontal: 13),
+      decoration: ShapeDecoration(
+        shape: RoundedRectangleBorder(
+          side: const BorderSide(width: 2, color: Color(0xFFECEDF1)),
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          hint: Text(hint, style: const TextStyle(color: Color(0xFFB3B0B0), fontSize: 12, fontFamily: 'Outfit')),
+          isExpanded: true,
+          items: items.map((v) => DropdownMenuItem(value: v, child: Text(v, style: const TextStyle(fontSize: 12, fontFamily: 'Outfit')))).toList(),
+          onChanged: onChanged,
         ),
       ),
     );
