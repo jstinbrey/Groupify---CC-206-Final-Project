@@ -22,13 +22,13 @@ require('./config/firebase');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 2. CORS
-const corsOptions = {
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
+// Enable CORS for web development
+app.use(cors({
+  origin: '*', // Allow all origins during development
   credentials: true,
-  optionsSuccessStatus: 200
-};
-app.use(cors(corsOptions));
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // 3. Request logging (optional, helpful for debugging)
 app.use((req, res, next) => {

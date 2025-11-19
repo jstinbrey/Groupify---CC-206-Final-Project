@@ -78,6 +78,7 @@ class ApiClient {
   }
 
   String _handleError(dynamic error) {
+    print('API Error Details: $error');
     if (error is SocketException) return 'No internet connection';
     if (error is HttpException) return 'Server error';
     if (error is ApiException) return error.message;

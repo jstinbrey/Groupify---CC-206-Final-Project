@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dashboard.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'task_screen.dart';
 import 'file_screen.dart';
 import 'services/auth_service.dart';
@@ -35,28 +36,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadUserProfile() async {
-    setState(() => _isLoading = true);
-    
-    try {
-      final response = await _userService.getUserProfile();
-      final userData = response['user'];
-
+  setState(() => _isLoading = true);
+  
+  try {
+    // Check if user is logged in
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
       setState(() {
         _user = {
-          'name': userData['fullName'] ?? 'User',
-          'email': userData['email'] ?? '',
-          'section': userData['section'] ?? '',
-          'school': userData['school'] ?? '',
-          'course': userData['course'] ?? '',
-          'yearLevel': userData['yearLevel'] ?? '',
+          'name': 'Guest',
+          'email': 'Not logged in',
+          'section': '',
+          'school': '',
+          'course': '',
+          'yearLevel': '',
         };
         _isLoading = false;
       });
-    } catch (e) {
-      print('Error loading profile: $e');
-      setState(() => _isLoading = false);
+      return;
     }
+
+    final response = await _userService.getUserProfile();
+    final userData = response['user'];
+
+    setState(() {
+      _user = {
+        'name': userData['fullName'] ?? 'User',
+        'email': userData['email'] ?? '',
+        'section': userData['section'] ?? '',
+        'school': userData['school'] ?? '',
+        'course': userData['course'] ?? '',
+        'yearLevel': userData['yearLevel'] ?? '',
+      };
+      _isLoading = false;
+    });
+  } catch (e) {
+    print('Error loading profile: $e');
+    setState(() {
+      _user = {
+        'name': 'Guest',
+        'email': 'Not logged in',
+        'section': '',
+        'school': '',
+        'course': '',
+        'yearLevel': '',
+      };
+      _isLoading = false;
+    });
   }
+}
 
   Future<void> _handleSignOut() async {
     final confirmed = await showDialog<bool>(

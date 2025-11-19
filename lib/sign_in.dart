@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'create_account.dart';
 import 'dashboard.dart';
@@ -52,6 +53,72 @@ class _SignInScreenState extends State<SignInScreen> {
       }
     }
   }
+
+  Future<void> _handleForgotPassword() async {
+  final emailController = TextEditingController();
+
+  final result = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Reset Password', style: TextStyle(fontFamily: 'Outfit')),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Enter your email address and we\'ll send you a password reset link.',
+            style: TextStyle(fontFamily: 'Outfit'),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: emailController,
+            keyboardType: TextInputType.emailAddress,
+            decoration: const InputDecoration(
+              labelText: 'Email',
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Cancel', style: TextStyle(fontFamily: 'Outfit')),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            if (emailController.text.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Please enter your email')),
+              );
+              return;
+            }
+
+            try {
+              await FirebaseAuth.instance.sendPasswordResetEmail(
+                email: emailController.text.trim(),
+              );
+              Navigator.pop(context, true);
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Error: ${e.toString()}')),
+              );
+            }
+          },
+          child: const Text('Send Reset Link', style: TextStyle(fontFamily: 'Outfit')),
+        ),
+      ],
+    ),
+  );
+
+  if (result == true && mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Password reset email sent! Check your inbox.'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+}
 
   @override
   void dispose() {
@@ -267,21 +334,24 @@ class _SignInScreenState extends State<SignInScreen> {
                       ),
                       
                       // Forgot Password
-                      const Positioned(
+                      Positioned(
                         left: 0,
                         right: 0,
                         top: 297,
                         child: Center(
-                          child: Text(
-                            'Forgot Password?',
-                            style: TextStyle(
-                              color: Color(0xFF3B82F6),
-                              fontSize: 15,
-                              fontFamily: 'Outfit',
-                              fontWeight: FontWeight.w500,
-                            ),
+                          child: GestureDetector(
+                            onTap: _handleForgotPassword,
+                            child: const Text(
+                              'Forgot Password?',
+                             style: TextStyle(
+                               color: Color(0xFF3B82F6),
+                               fontSize: 15,
+                               fontFamily: 'Outfit',
+                               fontWeight: FontWeight.w500,
+                             ),
+                           ),
                           ),
-                        ),
+                       ),
                       ),
                       
                       // Sign Up Text

@@ -143,6 +143,7 @@ router.get('/:groupId', authenticateToken, async (req, res) => {
 // ============================================
 // JOIN GROUP (via access code)
 // ============================================
+// JOIN GROUP (via access code)
 router.post('/join', authenticateToken, async (req, res) => {
   try {
     const { accessCode } = req.body;
@@ -184,10 +185,24 @@ router.post('/join', authenticateToken, async (req, res) => {
       members: admin.firestore.FieldValue.arrayUnion(req.user.uid)
     });
 
-    // Add group to user's groupIds
-    await db.collection(USERS_COLLECTION).doc(req.user.uid).update({
-      groupIds: admin.firestore.FieldValue.arrayUnion(groupDoc.id)
-    });
+    // FIXED: Check if user document exists first
+    const userRef = db.collection(USERS_COLLECTION).doc(req.user.uid);
+    const userDoc = await userRef.get();
+    
+    if (!userDoc.exists) {
+      // Create minimal user document if it doesn't exist
+      await userRef.set({
+        uid: req.user.uid,
+        email: req.user.email,
+        groupIds: [groupDoc.id],
+        createdAt: new Date().toISOString()
+      });
+    } else {
+      // Update existing user document
+      await userRef.update({
+        groupIds: admin.firestore.FieldValue.arrayUnion(groupDoc.id)
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -202,56 +217,7 @@ router.post('/join', authenticateToken, async (req, res) => {
     console.error('Join group error:', error);
     res.status(500).json({ 
       success: false,
-      error: 'Internal server error' 
-    });
-  }
-});
-
-// ============================================
-// LEAVE GROUP
-// ============================================
-router.post('/:groupId/leave', authenticateToken, async (req, res) => {
-  try {
-    const { groupId } = req.params;
-    const groupDoc = await db.collection(GROUPS_COLLECTION).doc(groupId).get();
-
-    if (!groupDoc.exists) {
-      return res.status(404).json({ 
-        success: false,
-        error: 'Group not found' 
-      });
-    }
-
-    const groupData = groupDoc.data();
-
-    // Check if user is a member
-    if (!groupData.members.includes(req.user.uid)) {
-      return res.status(400).json({ 
-        success: false,
-        error: 'You are not a member of this group' 
-      });
-    }
-
-    // Remove user from group members
-    await db.collection(GROUPS_COLLECTION).doc(groupId).update({
-      members: admin.firestore.FieldValue.arrayRemove(req.user.uid)
-    });
-
-    // Remove group from user's groupIds
-    await db.collection(USERS_COLLECTION).doc(req.user.uid).update({
-      groupIds: admin.firestore.FieldValue.arrayRemove(groupId)
-    });
-
-    res.status(200).json({
-      success: true,
-      message: 'Successfully left group'
-    });
-
-  } catch (error) {
-    console.error('Leave group error:', error);
-    res.status(500).json({ 
-      success: false,
-      error: 'Internal server error' 
+      error: 'Internal server error: ' + error.message 
     });
   }
 });

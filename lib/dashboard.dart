@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'new_task_screen.dart';
 import 'task_screen.dart';
 import 'file_screen.dart';
@@ -36,32 +37,45 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadDashboardData() async {
-    setState(() => _isLoading = true);
-    
-    try {
-      // Load user profile
-      final userProfile = await _userService.getUserProfile();
-      final userName = userProfile['user']['fullName'] ?? 'User';
-      final firstName = userName.split(' ')[0];
-
-      // Load tasks
-      final allTasks = await _tasksService.getMyTasks();
-      final pending = allTasks.where((t) => t['status'] == 'To Do').length;
-      final completed = allTasks.where((t) => t['status'] == 'Done').length;
-
+  setState(() => _isLoading = true);
+  
+  try {
+    // Check if user is logged in first
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      // Not logged in, show default values
       setState(() {
-        _userName = firstName;
-        _totalTasks = allTasks.length;
-        _pendingTasks = pending;
-        _completedTasks = completed;
+        _userName = 'Guest';
         _isLoading = false;
       });
-    } catch (e) {
-      print('Error loading dashboard: $e');
-      setState(() => _isLoading = false);
+      return;
     }
-  }
 
+    // Load user profile
+    final userProfile = await _userService.getUserProfile();
+    final userName = userProfile['user']['fullName'] ?? 'User';
+    final firstName = userName.split(' ')[0];
+
+    // Load tasks
+    final allTasks = await _tasksService.getMyTasks();
+    final pending = allTasks.where((t) => t['status'] == 'To Do').length;
+    final completed = allTasks.where((t) => t['status'] == 'Done').length;
+
+    setState(() {
+      _userName = firstName;
+      _totalTasks = allTasks.length;
+      _pendingTasks = pending;
+      _completedTasks = completed;
+      _isLoading = false;
+    });
+  } catch (e) {
+    print('Error loading dashboard: $e');
+    setState(() {
+      _userName = 'User';
+      _isLoading = false;
+    });
+  }
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(

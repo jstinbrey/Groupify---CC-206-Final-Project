@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'dashboard.dart';
 import 'file_screen.dart';
 import 'new_task_screen.dart';
@@ -30,23 +31,35 @@ class _TasksScreenState extends State<TasksScreen> {
   }
 
   Future<void> _loadTasks() async {
-    setState(() => _isLoading = true);
+  setState(() => _isLoading = true);
 
-    try {
-      final tasks = await _tasksService.getMyTasks();
+  try {
+    // Check if user is logged in
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
       setState(() {
-        _allTasks = tasks;
-        _filterTasks();
+        _allTasks = [];
+        _filteredTasks = [];
         _isLoading = false;
       });
-    } catch (e) {
-      print('Error loading tasks: $e');
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading tasks: $e')),
-      );
+      return;
     }
+
+    final tasks = await _tasksService.getMyTasks();
+    setState(() {
+      _allTasks = tasks;
+      _filterTasks();
+      _isLoading = false;
+    });
+  } catch (e) {
+    print('Error loading tasks: $e');
+    setState(() {
+      _allTasks = [];
+      _filteredTasks = [];
+      _isLoading = false;
+    });
   }
+}
 
   void _filterTasks() {
     setState(() {

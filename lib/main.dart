@@ -4,10 +4,13 @@ import 'firebase_options.dart';
 import 'onboarding.dart';
 import 'dashboard.dart';
 import 'services/auth_service.dart';
+import 'test_api.dart';
+import 'debug_signup.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   runApp(const MyApp());
 }
 
@@ -24,7 +27,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         fontFamily: 'Outfit',
       ),
-      home: const SplashScreen(),
+      home: const DebugSignupScreen(),
     );
   }
 }
